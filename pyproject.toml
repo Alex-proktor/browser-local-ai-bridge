@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "browser-local-ai-bridge"
+version = "0.1.0"
+description = "Durable orchestration between browser AI and local coding agents"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Alex-proktor"}]
+dependencies = []
+
+[project.scripts]
+browser-local-ai-bridge = "browser_local_ai_bridge.cli:main"
+browser-local-ai-bridge-worker = "browser_local_ai_bridge.worker_cli:main"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

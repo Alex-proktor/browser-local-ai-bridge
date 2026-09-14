@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sources": [
+    {"repo": "example-owner/example-mailbox", "issue": 1}
+  ],
+  "runtime": {
+    "repos": "repos.json",
+    "db": "task-state.db",
+    "tasks": "tasks",
+    "locks": "locks"
+  },
+  "executor": {
+    "kind": "codex",
+    "executable": "codex",
+    "timeout_seconds": 900
+  },
+  "poll_seconds": 5,
+  "max_deliveries_per_tick": 1
+}

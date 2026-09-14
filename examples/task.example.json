@@ -1,0 +1,14 @@
+{
+  "schema": "BRIDGE_TASK_V1",
+  "schema_version": 1,
+  "task_id": "example-read-only-check",
+  "goal": "Inspect the repository and report its current Git status without changing files.",
+  "repo": "example/sample-project",
+  "branch": "main",
+  "why_local_required": "The task needs access to the local checkout.",
+  "allowed_actions": ["read", "run harmless git commands"],
+  "forbidden_actions": ["edit files", "commit", "push", "deploy"],
+  "known_facts": [],
+  "do_not_repeat": [],
+  "expected_output": "Return a structured execution result with the observed Git status."
+}

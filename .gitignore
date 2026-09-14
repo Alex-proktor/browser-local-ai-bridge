@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Local config / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime state
+*.db
+*.sqlite
+*.sqlite3
+state/
+runtime/
+logs/
+*.log
+
+# Task/result runtime artifacts
+tasks/
+checkpoints/
+results/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary
+.tmp/
+tmp/
+*.tmp

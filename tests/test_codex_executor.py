@@ -69,7 +69,8 @@ def test_codex_executor_uses_stdin_and_output_last_message(tmp_path: Path):
     assert "--output-last-message" in captured["command"]
     assert "--ignore-user-config" in captured["command"]
     assert "--ephemeral" in captured["command"]
-    assert captured["command"][captured["command"].index("--sandbox") + 1] == "workspace-write"
+    assert "--sandbox" not in captured["command"]
+    assert "--approve-for-me" in captured["command"]
 
 
 def _write_result_script():

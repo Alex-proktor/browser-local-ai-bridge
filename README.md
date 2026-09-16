@@ -105,3 +105,5 @@ Runtime databases, task artifacts, credentials, raw prompts, chat history and un
 - `docs/protocol-v1.md`
 
 Licensed under the MIT License.
+
+Locally configured deterministic checks can use `execute-recipe <repo> <recipe>`; see [safe named recipes](docs/executors.md#safe-named-recipes-direct-local-cli) for configuration, limits and trust boundaries.

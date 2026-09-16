@@ -4,11 +4,14 @@ import argparse
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 from typing import Any
 
 from . import envelopes
 from .executors import CodexExecutor
+from .executors.command import CommandExecutor
+from .config import load_repo_allowlist, resolve_repo
 from .local_control import DirectLocalControl, LocalControlError, RuntimePaths
 
 
@@ -52,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
     execute.add_argument("--codex")
     execute.add_argument("--timeout", type=int, default=900)
 
+    recipe = sub.add_parser("execute-recipe")
+    recipe.add_argument("repo")
+    recipe.add_argument("recipe")
+    recipe.add_argument("--task-id", default=None)
+    recipe.add_argument("--branch", default="")
+
     status = sub.add_parser("status")
     status.add_argument("task_id")
 
@@ -75,6 +84,20 @@ def main(argv: list[str] | None = None) -> int:
             value = _control(args).validate_task(_load_task(args.task))
         elif args.command == "execute":
             value = _control(args, executor=True).submit(_load_task(args.task))
+        elif args.command == "execute-recipe":
+            paths = _control(args).paths
+            target = resolve_repo(args.repo, load_repo_allowlist(paths.repos))
+            executor = CommandExecutor(target=target, recipe_name=args.recipe)
+            task = envelopes.task_envelope(
+                task_id=args.task_id or f"recipe-{uuid.uuid4().hex}",
+                repo=args.repo, branch=args.branch,
+                goal=f"Run local recipe {args.recipe}",
+                why_local_required="Locally configured deterministic check",
+                allowed_actions=[f"recipe:{args.recipe}"],
+                forbidden_actions=["Execute commands supplied by task text"],
+                expected_output="Recipe exit status and bounded output accounting",
+            )
+            value = DirectLocalControl(paths=paths, executor=executor).submit(task)
         elif args.command == "status":
             value = _control(args).task_status(args.task_id)
         elif args.command == "inspect":
@@ -88,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
         _json_out({"status": "ERROR", "error": str(exc)})
         return 2
     _json_out(value)
+    if args.command == "execute-recipe" and value["execution"]["status"] != "SUCCESS":
+        return 1
     return 0
 
 

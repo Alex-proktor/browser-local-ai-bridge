@@ -303,3 +303,26 @@ def test_cancel_after_final_transition_still_wins_before_refs(tmp_path: Path, mo
     assert outcome.error_type == "user_cancelled"
     assert not task["result_envelope_ref"]
     assert not task["checkpoint_ref"]
+
+
+@pytest.mark.parametrize("branches,expected,error", [
+    (("main", "feature"), "feature", None),
+    (("feature", "feature"), "feature", "matched 2"),
+    (("main", "other"), "feature", "matched 0"),
+    (("main", "feature"), "", "branch is required"),
+])
+def test_multiple_checkout_selection(tmp_path, branches, expected, error):
+    db, tasks_root, first, _ = _prepare(tmp_path, branch=expected)
+    second = tmp_path / "second"
+    (second / ".git").mkdir(parents=True)
+    paths = (first, second)
+    allowlist = {"sample/repo": (RepoTarget("sample/repo", first), RepoTarget("sample/repo", second))}
+    executor = FakeExecutor(_success_outcome())
+    kwargs = dict(db_path=db, tasks_root=tasks_root, lock_root=tmp_path / "locks", task_id="task-1",
+                  allowlist=allowlist, executor=executor, branch_reader=lambda p: branches[paths.index(p)])
+    if error:
+        with pytest.raises(ExecutionError, match=error): execute_task(**kwargs)
+        assert executor.calls == 0
+    else:
+        assert execute_task(**kwargs).status == "SUCCESS"
+        assert executor.calls == 1

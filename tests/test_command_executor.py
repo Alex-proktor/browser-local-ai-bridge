@@ -121,3 +121,23 @@ def test_missing_executable_returns_private_failure(tmp_path):
     result = run(load_repo_allowlist(path)["sample/repo"])
     assert result.error_type == "process_error"
     assert "private-missing" not in repr(result)
+
+
+def test_cli_recipe_selects_matching_checkout_by_branch(tmp_path, capsys, monkeypatch):
+    import subprocess
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    for checkout, branch in ((first, "main"), (second, "feature")):
+        checkout.mkdir()
+        subprocess.run(["git", "init", "-b", branch], cwd=checkout, check=True, capture_output=True)
+    home = tmp_path / "home"
+    home.mkdir()
+    code = "raise SystemExit(0)"
+    config = {"version": 1, "repos": {"sample/repo": [
+        {"checkout_path": str(first), "recipes": {"check": {"argv": [sys.executable, "-c", code]}}},
+        {"checkout_path": str(second), "recipes": {"check": {"argv": [sys.executable, "-c", code]}}},
+    ]}}
+    (home / "repos.json").write_text(json.dumps(config))
+    monkeypatch.setattr("browser_local_ai_bridge.process_control.process_birth_token", lambda pid: "test")
+    assert main(["--home", str(home), "execute-recipe", "sample/repo", "check", "--branch", "feature"]) == 0
+    assert json.loads(capsys.readouterr().out)["result"]["status"] == "SUCCESS"

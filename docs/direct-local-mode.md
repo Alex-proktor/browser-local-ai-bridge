@@ -46,3 +46,7 @@ During execution, the runtime persists the executor PID, process-birth identity,
 Codex execution has bounded wall timeout, idle/no-progress timeout and repeated-progress guards. Startup reconciliation keeps a still-live verified run as `RUNNING`, recovers an already-written terminal result without re-execution, and marks a stale `RUNNING` task `INTERRUPTED` rather than retrying side effects automatically.
 
 The same `BRIDGE_TASK_V1` task model is shared with durable GitHub transport, so direct-local mode does not introduce another task protocol.
+
+## Multiple checkouts
+
+A logical repository can map to a fixed list of authorized checkout paths. For a list, `branch` is required and must match exactly one checkout current branch. Zero or multiple matches fail closed. The task envelope never selects or creates a local path/worktree.

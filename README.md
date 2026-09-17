@@ -57,7 +57,7 @@ python -m pytest -q
 
 ## Quick start: direct local
 
-Create a runtime home and copy `examples/repo-allowlist.example.json` to `repos.json`, replacing the sample checkout path with a repository you explicitly authorize.
+Create a runtime home and copy `examples/repo-allowlist.example.json` to `repos.json`, replacing the sample checkout path with a repository you explicitly authorize. A logical repository may also map to a fixed list of explicitly authorized checkouts; in that form tasks must name a branch that matches exactly one checkout. Tasks never supply local paths.
 
 Then inspect the surface:
 

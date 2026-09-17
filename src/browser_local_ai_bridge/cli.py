@@ -13,6 +13,7 @@ from .executors import CodexExecutor
 from .executors.command import CommandExecutor
 from .config import load_repo_allowlist, resolve_repo
 from .local_control import DirectLocalControl, LocalControlError, RuntimePaths
+from .execution import _git_branch, select_repo_target
 
 
 def _json_out(value: Any) -> None:
@@ -86,7 +87,9 @@ def main(argv: list[str] | None = None) -> int:
             value = _control(args, executor=True).submit(_load_task(args.task))
         elif args.command == "execute-recipe":
             paths = _control(args).paths
-            target = resolve_repo(args.repo, load_repo_allowlist(paths.repos))
+            target = select_repo_target(
+                resolve_repo(args.repo, load_repo_allowlist(paths.repos)), args.branch, _git_branch
+            )
             executor = CommandExecutor(target=target, recipe_name=args.recipe)
             task = envelopes.task_envelope(
                 task_id=args.task_id or f"recipe-{uuid.uuid4().hex}",

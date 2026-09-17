@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any
 
 from . import envelopes, runtime, state
-from .config import RepoTarget, default_home, load_repo_allowlist, resolve_repo
-from .execution import BranchReader, _git_branch, _lock_name, _validate_checkout, execute_task
+from .config import RepoAllowlist, default_home, load_repo_allowlist, resolve_repo
+from .execution import BranchReader, _git_branch, _lock_name, _validate_checkout, execute_task, select_repo_target
 from .executors.base import Executor
 
 
@@ -61,7 +61,7 @@ class DirectLocalControl:
         self.executor = executor
         self.branch_reader = branch_reader
 
-    def _allowlist(self) -> dict[str, RepoTarget]:
+    def _allowlist(self) -> RepoAllowlist:
         return load_repo_allowlist(self.paths.repos)
 
     def health(self) -> dict[str, Any]:
@@ -168,8 +168,17 @@ class DirectLocalControl:
             result = runtime.cancel_active(self.paths.db, task_id)
             if not result.get("cancelled"):
                 raise LocalControlError(f"active cancellation failed: {result.get('reason', 'unknown')}")
-            target = resolve_repo(str(record.get("repo") or ""), self._allowlist())
-            (self.paths.locks / _lock_name(target.checkout_path)).unlink(missing_ok=True)
+            target = select_repo_target(
+                resolve_repo(str(record.get("repo") or ""), self._allowlist()),
+                str(record.get("branch") or ""), self.branch_reader,
+            )
+            lock_path = self.paths.locks / _lock_name(target.checkout_path)
+            try:
+                owner = envelopes.load_json(lock_path, None)
+            except (OSError, envelopes.EnvelopeError):
+                owner = {}
+            if owner.get("task_id") == task_id:
+                lock_path.unlink(missing_ok=True)
             return {
                 "task_id": task_id,
                 "status": result["status"],

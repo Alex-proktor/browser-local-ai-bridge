@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator
 
 from . import envelopes, runtime, state
-from .config import RepoTarget, resolve_repo
+from .config import RepoAllowlist, RepoTarget, resolve_repo
 from .executors.base import ExecutionOutcome, Executor
 
 BranchReader = Callable[[Path], str]
@@ -38,18 +38,31 @@ def _git_branch(checkout: Path) -> str:
     return (completed.stdout or "").strip()
 
 
-def _validate_checkout(target: RepoTarget, expected_branch: str, branch_reader: BranchReader) -> Path:
-    checkout = target.checkout_path.resolve()
-    if not checkout.is_dir():
-        raise ExecutionError("allowed checkout does not exist")
-    if not (checkout / ".git").exists():
-        raise ExecutionError("allowed checkout is not a git checkout")
+
+def select_repo_target(target: RepoTarget | tuple[RepoTarget, ...], expected_branch: str, branch_reader: BranchReader) -> RepoTarget:
     expected = str(expected_branch or "").strip()
-    if expected:
-        current = branch_reader(checkout)
-        if current != expected:
+    targets = target if isinstance(target, tuple) else (target,)
+    if len(targets) > 1 and not expected:
+        raise ExecutionError("branch is required for multiple checkouts")
+    matches = []
+    for item in targets:
+        checkout = item.checkout_path.resolve()
+        if not checkout.is_dir():
+            raise ExecutionError("allowed checkout does not exist")
+        if not (checkout / ".git").exists():
+            raise ExecutionError("allowed checkout is not a git checkout")
+        current = branch_reader(checkout) if expected else ""
+        if not expected or current == expected:
+            matches.append(item)
+        elif len(targets) == 1:
             raise ExecutionError(f"checkout branch mismatch: expected {expected}, got {current or '<detached>'}")
-    return checkout
+    if len(matches) != 1:
+        raise ExecutionError(f"branch must match exactly one allowed checkout; matched {len(matches)}")
+    return matches[0]
+
+
+def _validate_checkout(target: RepoTarget | tuple[RepoTarget, ...], expected_branch: str, branch_reader: BranchReader) -> Path:
+    return select_repo_target(target, expected_branch, branch_reader).checkout_path.resolve()
 
 
 def _lock_name(checkout: Path) -> str:
@@ -175,7 +188,7 @@ def execute_task(
     tasks_root: Path,
     lock_root: Path,
     task_id: str,
-    allowlist: dict[str, RepoTarget],
+    allowlist: RepoAllowlist,
     executor: Executor,
     branch_reader: BranchReader = _git_branch,
 ) -> ExecutionOutcome:

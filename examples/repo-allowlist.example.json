@@ -1,6 +1,10 @@
 {
   "version": 1,
   "repos": {
-    "example/sample-project": "C:/dev/sample-project"
+    "example/sample-project": "C:/dev/sample-project",
+    "example/multi-worktree-project": [
+      "C:/dev/project-main",
+      {"checkout_path": "C:/dev/project-feature"}
+    ]
   }
 }

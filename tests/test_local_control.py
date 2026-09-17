@@ -142,3 +142,19 @@ def test_active_cancel_kills_verified_tree_and_transitions(tmp_path: Path, monke
     result = control.cancel(running_id)
     assert result == {"task_id": running_id, "status": "CANCELLED", "replay": False, "reason": "terminated"}
     assert calls == [(4321, "birth")]
+
+
+def test_active_cancel_does_not_remove_foreign_checkout_lock(tmp_path, monkeypatch):
+    control, task = _setup(tmp_path)
+    running_id = "running-owned-lock"
+    state.create_task(control.paths.db, task_id=running_id, status="RUNNING", repo=task["repo"], branch=task["branch"])
+    runtime.start_run(control.paths.db, run_id="run-1", task_id=running_id, executor="fake")
+    runtime.record_process(control.paths.db, "run-1", pid=4321, birth_token="birth", timeout_seconds=30)
+    monkeypatch.setattr("browser_local_ai_bridge.process_control.terminate_process_tree", lambda pid, token: (True, "terminated"))
+    checkout = Path(json.loads(control.paths.repos.read_text())["repos"]["sample/repo"])
+    from browser_local_ai_bridge.execution import _lock_name
+    control.paths.locks.mkdir(parents=True, exist_ok=True)
+    lock = control.paths.locks / _lock_name(checkout)
+    lock.write_text(json.dumps({"task_id": "other-task", "run_id": "other-run"}))
+    assert control.cancel(running_id)["status"] == "CANCELLED"
+    assert lock.exists()

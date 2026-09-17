@@ -85,3 +85,29 @@ def test_batch_recipe_rejected(tmp_path, suffix):
     }}}))
     with pytest.raises(ConfigError, match="non-batch"):
         load_repo_allowlist(path)
+
+
+def test_allowlist_accepts_multiple_checkout_entries(tmp_path):
+    first = tmp_path / "one"
+    second = tmp_path / "two"
+    path = tmp_path / "repos.json"
+    path.write_text(json.dumps({"version": 1, "repos": {"repo": [str(first), {"checkout_path": str(second)}]}}))
+    targets = load_repo_allowlist(path)["repo"]
+    assert isinstance(targets, tuple)
+    assert [target.checkout_path for target in targets] == [first.resolve(), second.resolve()]
+
+
+@pytest.mark.parametrize("entry", [[], [None], [{"bad": "repo"}]])
+def test_invalid_multiple_checkout_entries_fail_closed(tmp_path, entry):
+    path = tmp_path / "repos.json"
+    path.write_text(json.dumps({"version": 1, "repos": {"repo": entry}}))
+    with pytest.raises(ConfigError):
+        load_repo_allowlist(path)
+
+
+def test_duplicate_resolved_checkout_paths_fail_closed(tmp_path):
+    path = tmp_path / "repos.json"
+    same = tmp_path / "repo"
+    path.write_text(json.dumps({"version": 1, "repos": {"repo": [str(same), str(same / ".")]}}))
+    with pytest.raises(ConfigError, match="duplicate checkout"):
+        load_repo_allowlist(path)

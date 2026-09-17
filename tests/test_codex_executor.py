@@ -1,4 +1,5 @@
 import json
+import pytest
 import sys
 from pathlib import Path
 
@@ -61,7 +62,8 @@ def test_codex_executor_uses_stdin_and_output_last_message(tmp_path: Path):
     assert outcome.status == "SUCCESS"
     assert captured["checkout"] == tmp_path
     assert captured["timeout"] == 60
-    assert captured["command"][:4] == ["codex", "exec", "-C", str(tmp_path)]
+    assert Path(captured["command"][0]).name.lower() in {"codex", "codex.exe"}
+    assert captured["command"][1:4] == ["exec", "-C", str(tmp_path)]
     assert captured["command"][-1] == "-"
     assert "Fix sample" not in captured["command"]
     assert "goal: Fix sample" in captured["prompt"]
@@ -190,3 +192,16 @@ def test_identity_lookup_overhead_does_not_consume_execution_timeout(tmp_path: P
         tmp_path, output, 1, "synthetic prompt",
     )
     assert outcome.status == "SUCCESS"
+
+
+def test_resolve_codex_executable_uses_existing_absolute_path(tmp_path):
+    from browser_local_ai_bridge.executors.codex import resolve_codex_executable
+    exe = tmp_path / "codex.exe"
+    exe.write_bytes(b"")
+    assert resolve_codex_executable(str(exe)) == str(exe.resolve())
+
+
+def test_resolve_codex_executable_fails_for_missing_non_openai_absolute_path(tmp_path):
+    from browser_local_ai_bridge.executors.codex import CodexExecutorError, resolve_codex_executable
+    with pytest.raises(CodexExecutorError, match="does not exist"):
+        resolve_codex_executable(str(tmp_path / "codex.exe"))

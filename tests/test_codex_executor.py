@@ -56,13 +56,13 @@ def test_codex_executor_uses_stdin_and_output_last_message(tmp_path: Path):
         output_path.write_text(json.dumps(_valid_result()), encoding="utf-8")
         return ExecutionOutcome(status="SUCCESS", result=_valid_result(), executor="codex")
 
-    executor = CodexExecutor(timeout_seconds=60, launcher=launcher)
+    executor = CodexExecutor(executable=sys.executable, timeout_seconds=60, launcher=launcher)
     outcome = executor.execute(task=_task(), checkout=tmp_path)
 
     assert outcome.status == "SUCCESS"
     assert captured["checkout"] == tmp_path
     assert captured["timeout"] == 60
-    assert Path(captured["command"][0]).name.lower() in {"codex", "codex.exe"}
+    assert captured["command"][0] == str(Path(sys.executable).resolve())
     assert captured["command"][1:4] == ["exec", "-C", str(tmp_path)]
     assert captured["command"][-1] == "-"
     assert "Fix sample" not in captured["command"]

@@ -238,7 +238,7 @@ class CodexExecutor:
         repeated_progress_limit: int = 50,
         launcher: ProcessLauncher = launch_codex_process,
     ) -> None:
-        self.executable = resolve_codex_executable(executable)
+        self.executable = executable
         self.timeout_seconds = validate_timeout_seconds(timeout_seconds)
         self.idle_timeout_seconds = max(0, int(idle_timeout_seconds))
         self.repeated_progress_limit = max(0, int(repeated_progress_limit))
@@ -248,8 +248,9 @@ class CodexExecutor:
         prompt = build_prompt(task)
         with tempfile.TemporaryDirectory(prefix="browser-local-ai-bridge-codex-") as temp_dir:
             output_path = Path(temp_dir) / "last-message.json"
+            executable = resolve_codex_executable(self.executable)
             command = [
-                self.executable,
+                executable,
                 "exec",
                 "-C",
                 str(checkout),

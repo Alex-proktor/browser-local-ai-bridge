@@ -16,9 +16,11 @@ Browser AI -> GitHub mailbox -> local worker -> executor -> structured GitHub re
 
 The core does not depend on a specific browser controller, remote-computer connector, or coding agent. The first supported executor is Codex CLI.
 
-## v0.1.0
+## v0.2.0
 
-The first release provides:
+The current release adds safe deterministic named recipes, allowlisted multi-worktree selection, resilient Codex Desktop executable discovery after app updates, and minimal contributor/roadmap infrastructure.
+
+The v0.1 baseline provides:
 
 - `BRIDGE_TASK_V1`, `BRIDGE_RESULT_V1` and `BRIDGE_CHECKPOINT_V1` envelopes;
 - explicit logical-repository to local-checkout allowlist;

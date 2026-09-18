@@ -1,0 +1,21 @@
+﻿name: Feature request
+description: Propose an improvement backed by a real workflow limitation
+title: "feature: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    attributes:
+      label: Observed limitation
+      description: What real manual work, delay, repetition, reliability problem, or missing capability did you encounter?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed outcome
+      description: Describe the smallest useful outcome, not a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Consumer / workflow
+      description: Which project or workflow demonstrates the need?

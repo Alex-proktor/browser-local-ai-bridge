@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import signal
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -23,6 +24,29 @@ ProcessLauncher = Callable[..., ExecutionOutcome]
 
 class CodexExecutorError(ValueError):
     pass
+
+
+def resolve_codex_executable(value: str = "codex") -> str:
+    requested = str(value or "codex").strip() or "codex"
+    path = Path(requested).expanduser()
+    if path.is_absolute():
+        if path.is_file():
+            return str(path.resolve())
+        if path.name.lower() == "codex.exe" and "OpenAI" in path.parts and "Codex" in path.parts:
+            root = Path(os.getenv("LOCALAPPDATA", "")) / "OpenAI" / "Codex" / "bin"
+            candidates = sorted(root.glob("*/codex.exe"), key=lambda item: item.stat().st_mtime, reverse=True) if root.is_dir() else []
+            if candidates:
+                return str(candidates[0].resolve())
+        raise CodexExecutorError("configured Codex executable does not exist")
+    found = shutil.which(requested)
+    if found:
+        return str(Path(found).resolve())
+    if os.name == "nt":
+        root = Path(os.getenv("LOCALAPPDATA", "")) / "OpenAI" / "Codex" / "bin"
+        candidates = sorted(root.glob("*/codex.exe"), key=lambda item: item.stat().st_mtime, reverse=True) if root.is_dir() else []
+        if candidates:
+            return str(candidates[0].resolve())
+    raise CodexExecutorError("Codex executable could not be resolved")
 
 
 def validate_timeout_seconds(value: int | float | None) -> int:
@@ -224,8 +248,9 @@ class CodexExecutor:
         prompt = build_prompt(task)
         with tempfile.TemporaryDirectory(prefix="browser-local-ai-bridge-codex-") as temp_dir:
             output_path = Path(temp_dir) / "last-message.json"
+            executable = resolve_codex_executable(self.executable)
             command = [
-                self.executable,
+                executable,
                 "exec",
                 "-C",
                 str(checkout),

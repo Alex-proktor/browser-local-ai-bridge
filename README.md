@@ -1,8 +1,18 @@
 # BrowserLocal AI Bridge
 
-Local-first orchestration between browser AI controllers and local coding agents.
+**Let browser-based AI safely delegate real work to coding agents on your own computer.**
 
-BrowserLocal AI Bridge removes the manual copy/paste loop between a browser-based AI controller and coding tools working against local repositories.
+BrowserLocal AI Bridge is a local-first, vendor-neutral orchestration layer between a browser AI controller (for example ChatGPT), an authorized computer connector, and local coding executors such as Codex CLI. It replaces manual copy/paste with bounded tasks, explicit repository allowlists, persistent state, structured results, cancellation and recovery.
+
+This is **not a browser-automation bridge**. It bridges an AI controller to local repositories, terminals and coding agents while keeping execution and large data on the workstation.
+
+### Why use it?
+
+- **Direct-local for interactive work:** browser AI -> authorized connector -> Bridge -> local executor -> structured result.
+- **Durable mode when needed:** queue long-running work through GitHub so it can survive browser/session loss.
+- **Fail-closed local access:** remote tasks reference logical repositories, never arbitrary local paths.
+- **Lower agent cost for routine checks:** safe named recipes can run deterministic local commands without spending a coding-agent turn.
+- **Real multi-worktree workflows:** one logical repository can map to explicitly allowlisted Git worktrees and select exactly one by branch.
 
 It supports two execution modes:
 

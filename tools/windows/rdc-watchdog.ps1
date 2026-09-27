@@ -16,7 +16,13 @@ try {
   }
   $agents = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -like "*$Entry*" -and $_.CommandLine -match '\sremote(?:\s|$)' })
   if ($agents.Count -gt 0) {
-    Write-Log "agent healthy pid=$($agents[0].ProcessId)"
+    $failurePath = Join-Path $Root "watchdog-failure.json"
+    if (Test-Path $failurePath) {
+      Remove-Item -LiteralPath $failurePath -Force
+      Write-Log "agent healthy pid=$($agents[0].ProcessId); cleared restart backoff state"
+    } else {
+      Write-Log "agent healthy pid=$($agents[0].ProcessId)"
+    }
     exit 0
   }
   $info = Get-ScheduledTaskInfo -TaskName $TaskName

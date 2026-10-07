@@ -66,4 +66,3 @@ def test_intact_entry_does_not_hide_missing_dependency(tmp_path):
     dependency.mkdir(parents=True)
     (dependency / 'package.json').write_text('{}')
     assert ps(f"$RdcEntryHash='{digest}'; Get-RdcPackageProblem '{path}'") == ''
-

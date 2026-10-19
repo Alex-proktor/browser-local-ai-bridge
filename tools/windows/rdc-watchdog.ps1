@@ -5,7 +5,7 @@ Import-Module "$env:SystemRoot\System32\WindowsPowerShell\v1.0\Modules\Scheduled
 $TaskName = 'Remote Desktop Commander Agent'
 $Root = Join-Path $env:LOCALAPPDATA 'RemoteDesktopCommander'
 $LogDir = Join-Path $Root 'logs'
-$PackageDir = Join-Path $env:APPDATA 'npm\node_modules\@wonderwhy-er\desktop-commander'
+$PackageDir = Get-RdcPackageDir
 $Entry = Join-Path $PackageDir 'dist\index.js'
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $Log = Join-Path $LogDir 'watchdog.log'

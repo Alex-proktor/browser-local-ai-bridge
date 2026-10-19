@@ -17,6 +17,12 @@ RDC отвечает за соединение браузера с ПК. Дол�
 
 ## Новая схема
 
+Текущая фиксированная версия RDC — **0.3.0**, entrypoint SHA-256 `7E58B9D5D64732FF8CD77CD477DE30751FEB6B59BC2353DFAA78825F015B2F2B`. Переход выполнен 19 октября с сохранением auth/config. Проверенный npm tarball имеет integrity `sha512-2EXNxuztSIW3fQw6OEGMek39M8yQlKinXooMYtNR4wRLhtA+f3b0cbxBggAfDeKemMWltm1qWQy/t2Av9VmYLw==`.
+
+Каждая версия имеет отдельный global npm prefix `%LOCALAPPDATA%\RemoteDesktopCommander\runtimes\<version>`. Entry: `node_modules\@wonderwhy-er\desktop-commander\dist\index.js` внутри prefix. Общая `%APPDATA%\npm` и `_npx` не используются. Это устраняет перезапись старого заблокированного runtime при обновлении и позволяет проверить новую версию до переключения Task actions. Это не исключение из антивирусной защиты.
+
+Разработчик [подтвердил совпадение проблемного 0.2.51 с исходной сборкой и обращение к Kaspersky](https://github.com/wonderwhy-er/DesktopCommanderMCP/issues/729). [Release 0.3.0](https://github.com/wonderwhy-er/DesktopCommanderMCP/releases/tag/v0.3.0) содержит remote/reconnect и security fixes, но не заявляет завершённого решения Kaspersky. Поэтому успешное статическое сканирование нового пакета не заменяет проверку поведения и не гарантирует отсутствие будущих обнаружений.
+
 - `install-rdc-resilience.ps1` устанавливает скрипты в каталог `%LOCALAPPDATA%\RemoteDesktopCommander\releases\<hash>`. Task actions указывают на конкретный release, поэтому checkout другого branch не меняет runtime. Повторная установка тех же файлов использует тот же release.
 - Agent остаётся интерактивной пользовательской задачей: это требуется инструментам рабочего стола. Watchdog запускается в фоновом S4U session без окна и без сохранения пароля. Однократная установка требует elevated PowerShell.
 - Watchdog проверяет процесс каждую минуту. Только он управляет автоматическими перезапусками; Task Scheduler Agent не создаёт параллельную retry-цепочку. UTC backoff ограничен 30 минутами, учитывает смену часов, сбрасывается при живом процессе. `IgnoreNew`, startup grace и mutex launcher предотвращают дублирование.
@@ -28,7 +34,7 @@ RDC отвечает за соединение браузера с ПК. Дол�
 ## Установка и восстановление
 
 1. Проверить отчёт антивируса. Если он удаляет RDC, решить конфликт для конкретной цепочки выполнения; не добавлять весь `node.exe`, весь npm или все PowerShell scripts в исключения. Настройки защиты installer не меняет. См. [инструкцию Kaspersky](https://support.kaspersky.com/help/Kaspersky/Win21.5/en-US/227390.htm).
-2. При отсутствующем/повреждённом пакете и остановленном RDC выполнить `tools/windows/repair-rdc-runtime.ps1`. Это явное обслуживание глобальной версии 0.2.51, а не фоновый цикл. Скрипт отказывается менять живой пакет.
+2. При отсутствующем/повреждённом пакете и остановленном RDC выполнить `tools/windows/repair-rdc-runtime.ps1`. Это явное обслуживание глобальной версии 0.3.0, а не фоновый цикл. Скрипт отказывается менять живой пакет. После npm install выполнить bootstrap/import smoke и проверить backend online/RPC.
 3. Один раз запустить `tools/windows/install-rdc-resilience.ps1` в elevated PowerShell. Обе задачи будут Enabled; текущий Agent process не перезапускается. Результат установки записывается в `installation-status.json`.
 4. Запустить Watchdog task. При целостном пакете и отсутствии процесса он стартует Agent. Подтвердить глобальный command line, Agent Running, Watchdog S4U/Enabled, backend online и RPC ping.
 5. После lifecycle changes провести один kill/recovery smoke, проверить отсутствие duplicate remote agents и новых AV events. Reboot/login и sleep/wake требуют отдельных фактических проверок.

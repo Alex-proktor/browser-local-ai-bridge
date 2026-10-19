@@ -1,7 +1,7 @@
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'rdc-common.ps1')
-$packageDir = Join-Path $env:APPDATA 'npm\node_modules\@wonderwhy-er\desktop-commander'
+$packageDir = Get-RdcPackageDir
 $problem = Get-RdcPackageProblem $packageDir
 if ($problem) {
   Write-Error "RDC integrity failure: $problem. Run repair-rdc-runtime.ps1 after reviewing antivirus reports." -ErrorAction Continue

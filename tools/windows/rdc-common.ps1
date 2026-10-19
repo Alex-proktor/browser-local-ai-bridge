@@ -1,5 +1,7 @@
-$RdcVersion = '0.2.51'
-$RdcEntryHash = 'A4145198DC75CD34E7C7452C2054B4CC0D29E199AE1459961A17E4DA25A13500'
+$RdcVersion = '0.3.0'
+$RdcEntryHash = '7E58B9D5D64732FF8CD77CD477DE30751FEB6B59BC2353DFAA78825F015B2F2B'
+function Get-RdcNpmPrefix { return Join-Path $env:LOCALAPPDATA "RemoteDesktopCommander\runtimes\$RdcVersion" }
+function Get-RdcPackageDir { return Join-Path (Get-RdcNpmPrefix) 'node_modules\@wonderwhy-er\desktop-commander' }
 function Get-RdcFileHash([string]$Path) {
   $stream = [System.IO.File]::OpenRead($Path)
   $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -35,6 +37,10 @@ function Get-RdcRetryPlan($State, [datetimeoffset]$Now) {
 function Get-RdcAvCorrelation([datetime]$Since) {
   try {
     $events = Get-WinEvent -FilterHashtable @{LogName='Application';Id=4662;StartTime=$Since} -MaxEvents 500 -ErrorAction Stop
-    return $events | Where-Object { $_.ProviderName -eq 'avp' -and ($_.Properties.Value -join ' ') -like "*$RdcEntryHash*" } | Select-Object -First 1
+    return $events | Where-Object {
+      # Keep historical correlation visible across supported-version upgrades.
+      $data = $_.Properties.Value -join ' '
+      $_.ProviderName -eq 'avp' -and ($data -like "*$RdcEntryHash*" -or $data -match 'desktop-commander[\\/]dist[\\/]index\.js')
+    } | Select-Object -First 1
   } catch { return $null }
 }

@@ -57,7 +57,7 @@ def test_intact_entry_does_not_hide_missing_dependency(tmp_path):
     (tmp_path / 'dist').mkdir()
     (tmp_path / 'dist' / 'index.js').write_bytes(b'export {};')
     (tmp_path / 'package.json').write_text(json.dumps({
-        'version': '0.2.51', 'dependencies': {'missing-sdk': '^1.0.0'},
+        'version': '0.3.0', 'dependencies': {'missing-sdk': '^1.0.0'},
     }))
     digest = hashlib.sha256(b'export {};').hexdigest().upper()
     path = str(tmp_path).replace("'", "''")
@@ -66,3 +66,9 @@ def test_intact_entry_does_not_hide_missing_dependency(tmp_path):
     dependency.mkdir(parents=True)
     (dependency / 'package.json').write_text('{}')
     assert ps(f"$RdcEntryHash='{digest}'; Get-RdcPackageProblem '{path}'") == ''
+
+
+def test_old_release_cannot_be_silently_restored(tmp_path):
+    (tmp_path / 'package.json').write_text(json.dumps({'version': '0.2.51'}))
+    path = str(tmp_path).replace("'", "''")
+    assert ps(f"Get-RdcPackageProblem '{path}'") == 'version mismatch: 0.2.51'

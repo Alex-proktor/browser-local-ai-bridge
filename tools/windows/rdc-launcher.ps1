@@ -1,9 +1,10 @@
 param()
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'rdc-common.ps1')
 $Root = Join-Path $env:LOCALAPPDATA "RemoteDesktopCommander"
 $LogDir = Join-Path $Root "logs"
 $Node = "C:\Program Files\nodejs\node.exe"
-$Entry = Join-Path $env:APPDATA "npm\node_modules\@wonderwhy-er\desktop-commander\dist\index.js"
+$Entry = Join-Path (Get-RdcPackageDir) 'dist\index.js'
 $Bootstrap = Join-Path $PSScriptRoot "rdc-bootstrap.ps1"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
